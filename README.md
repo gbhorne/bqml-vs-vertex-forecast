@@ -22,6 +22,8 @@ On a 28-day production holdout, the same 2,820 retail series, weighted MAPE:
 
 The most striking finding is on holidays: ARIMA hit **77.27% MAPE** on holiday days vs TFT's **25.75%**, a 51-point swing. On promotion days: ARIMA 40.06% vs TFT 16.37%, a 24-point swing. These are direct, measured covariate effects.
 
+![Pipeline overview](diagrams/pipeline_overview.svg)
+
 ---
 
 ## Production scope
@@ -68,7 +70,7 @@ The result is a defensible benchmark suitable for production decision-making, no
 ## What's in this repository
 
 ```
-gcp-retail-prediction/
+bqml-vs-vertex-forecast/
 ├── README.md                    # this file
 ├── ARCHITECTURE_bqml.md         # deep technical architecture
 ├── QA.md                        # design + engineering Q&A

@@ -1,11 +1,7 @@
 # GCP Retail Demand Forecasting
 
-**Production demand forecasting on Google Cloud Platform — comparing BQML ARIMA_PLUS against Vertex AI Forecast (Temporal Fusion Transformer) on 7 years of retail data.**
+**Production demand forecasting on Google Cloud Platform, comparing BQML ARIMA_PLUS against Vertex AI Forecast (Temporal Fusion Transformer, on 7 years of retail data.**
 
-[![Built on GCP](https://img.shields.io/badge/Built%20on-GCP-4285F4)]()
-[![BigQuery ML](https://img.shields.io/badge/BigQuery%20ML-ARIMA__PLUS-4285F4)]()
-[![Vertex AI](https://img.shields.io/badge/Vertex%20AI-Forecast%20TFT-34A853)]()
-[![CMEK](https://img.shields.io/badge/Encryption-CMEK-EA4335)]()
 
 ---
 
@@ -18,7 +14,7 @@ On a 28-day production holdout, the same 2,820 retail series, weighted MAPE:
 | BQML ARIMA_PLUS | Univariate, holiday-detected | 15,000 | 3 min | ~$2 | 32.6% |
 | Vertex AI Forecast (TFT) | Multivariate, 14 covariates | 3,000 | 4h 18m | ~$15-25 | **16.9%** |
 
-**44% relative MAPE reduction.** Same 2,820 series eval: ARIMA 30.08% → TFT 16.92%, a 13.16 percentage-point absolute drop. The covariates ARIMA cannot see — `promo_flag`, `weather_temp_f`, `is_holiday` — produced the entire gap.
+**44% relative MAPE reduction.** Same 2,820 series eval: ARIMA 30.08% → TFT 16.92%, a 13.16 percentage-point absolute drop. The covariates ARIMA cannot see, `promo_flag`, `weather_temp_f`, and `is_holiday`, produced the entire gap.
 
 The most striking finding is on holidays: ARIMA hit **77.27% MAPE** on holiday days vs TFT's **25.75%**, a 51-point swing. On promotion days: ARIMA 40.06% vs TFT 16.37%, a 24-point swing. These are direct, measured covariate effects.
 
@@ -112,7 +108,7 @@ Top-100-SKUs-by-revenue is dominated by high-price categories. Beverages, Snacks
 
 ---
 
-## Why TFT wins — covariate effects
+## Why TFT Wins: Covariate Effects
 
 The 13-MAPE-point gap is not a generic deep-learning improvement. It's a measurable, attributable effect of three specific covariates ARIMA structurally cannot see.
 
@@ -141,7 +137,7 @@ Promotion days produce 1.5–2.5× volume spikes. ARIMA cannot see `promo_flag` 
 | Weekday | 56,287 | 32.57% | 17.87% |
 | Weekend | 22,543 | 25.63% | 15.22% |
 
-Both models capture day-of-week structure. ARIMA via autocorrelation in seasonal components; TFT via explicit features. Both improved similarly — confirmation that the TFT advantage is specifically about covariates ARIMA can't see, not about generic model capacity.
+Both models capture day-of-week structure. ARIMA via autocorrelation in seasonal components; TFT via explicit features. Both improved similarly, confirmation that the TFT advantage is specifically about covariates ARIMA can't see, not about generic model capacity.
 
 ---
 
@@ -157,7 +153,7 @@ Top 5 series by MAPE improvement, ARIMA vs TFT:
 | S0053 | SKU00271 | Apparel | 458 | 81.64% | 23.35% | 58 pp |
 | S0051 | SKU00357 | Electronics | 258 | 93.91% | 35.83% | 58 pp |
 
-These are series where ARIMA's univariate decomposition went badly wrong — likely from lifecycle discontinuities or regime shifts. TFT's static lifecycle attribute and rich covariate history stabilized predictions in the 18-35% MAPE range.
+These are series where ARIMA's univariate decomposition went badly wrong, likely from lifecycle discontinuities or regime shifts; TFT's static lifecycle attribute and rich covariate history stabilized predictions in the 18-35% MAPE range.
 
 ### Day-by-day proof, S0015_SKU00386 (Electronics)
 
@@ -184,7 +180,7 @@ Top 5 series by TFT MAPE (filtered to volume > 50 to exclude small-denominator p
 | S0035 | SKU00360 | Electronics | 54 | 49.79% |
 | S0027 | SKU00360 | Electronics | 77 | 47.23% |
 
-Four of five are SKU00360 across different stores — same SKU, different locations, all bad. This is a model-level signal indicating a specific SKU or pricing pattern the TFT model didn't fit. A production deployment would investigate this individually rather than treating it as random tail noise.
+Four of five are SKU00360 across different stores: same SKU, different locations, all performing poorly. This is a model-level signal indicating a specific SKU or pricing pattern the TFT model didn't fit. A production deployment would investigate this individually rather than treating it as random tail noise.
 
 ---
 
@@ -209,3 +205,12 @@ Total project cost is bounded by a Vertex AI training budget cap of 3 node-hours
 MIT licensed. Issues, comments, and forks welcome.
 
 Built April 2026. All synthetic data, no real retailer information was used.
+
+---
+
+## Author
+
+**Gregory B. Horne**
+Cloud Solutions Architect
+
+[GitHub: gbhorne](https://github.com/gbhorne) | [LinkedIn](https://linkedin.com/in/gbhorne)

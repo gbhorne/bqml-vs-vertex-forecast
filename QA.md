@@ -6,11 +6,19 @@ Answers to questions someone reviewing this work might ask. Organized by what an
 
 ## Methodology and evaluation
 
-### Why MAPE? Why not RMSE, sMAPE, or RMSSE?
+### Why "weighted MAPE" / WAPE? Why not pure MAPE, RMSE, sMAPE, or RMSSE?
 
-Three reasons. First, MAPE is the metric retail finance teams already use — when forecast error is reported to the business, it's reported as a percentage. Second, weighted MAPE (sum of errors / sum of actuals) is robust to the small-denominator pathology that breaks per-row MAPE — it's the metric Walmart, Amazon, and the M5 competition use. Third, it's directly interpretable: a 16.92% MAPE means "on average, our forecast is off by ~17% of actual demand."
+First, a naming clarification. The headline metric in this project is computed as `SUM(ABS(predicted - actual)) / SUM(actual)`. This is technically the Weighted Absolute Percentage Error (WAPE), not row-level MAPE. Pure MAPE would be `AVG(ABS(predicted - actual) / actual)`. The two metrics agree on uniform-volume data but diverge sharply when demand is unevenly distributed across series — which is exactly the case for retail. I use "weighted MAPE" and "WAPE" interchangeably throughout the docs because both terms are common in industry. WAPE is the more precise name.
 
-RMSE is better for optimization but harder to communicate. sMAPE handles zeros but produces values bounded between 0 and 200% which is confusing. RMSSE is mathematically cleaner but requires computing a naive baseline first. For a portfolio-grade benchmark, weighted MAPE is the right choice — defensible and interpretable.
+Why this metric:
+
+First, retail finance teams already use percentage error as the language for forecast accuracy. Reporting in WAPE keeps the result comprehensible to the business audience.
+
+Second, WAPE is robust to the small-denominator pathology that breaks row-level MAPE. If one series sells 1 unit and we predict 5, that's 400% MAPE on that row — pure MAPE averages this in, and a few low-volume series can dominate the metric. WAPE weights by volume, so the overall number reflects model performance on the bulk of demand rather than on a handful of noisy small-volume tails. This is the metric Walmart, Amazon, and Kaggle's M5 competition use.
+
+Third, it's directly interpretable: a 16.92% WAPE means "the forecast is off by ~17% of total actual demand."
+
+RMSE is better for optimization but harder to communicate. sMAPE handles zeros but produces values bounded between 0 and 200% which is confusing. RMSSE is mathematically cleaner but requires computing a naive baseline first. For a portfolio-grade benchmark, WAPE is the right choice — defensible and interpretable.
 
 ### Why a 28-day holdout? Why not longer?
 

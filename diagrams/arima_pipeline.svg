@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="680" height="560" viewBox="0 0 680 560" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>BQML ARIMA pipeline detail</title>
+<desc>Detailed view of the ARIMA pipeline: top-200 SKU selection through evaluation result.</desc>
+<defs>
+<style>
+text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", "Helvetica Neue", Arial, sans-serif; }
+.t { font-size: 14px; font-weight: 400; }
+.ts { font-size: 12px; font-weight: 400; }
+.th { font-size: 14px; font-weight: 500; }
+.c-purple rect { fill: #EEEDFE; stroke: #534AB7; }
+.c-purple .th, .c-purple .t { fill: #26215C; }
+.c-purple .ts { fill: #534AB7; }
+.c-teal rect { fill: #E1F5EE; stroke: #0F6E56; }
+.c-teal .th, .c-teal .t { fill: #04342C; }
+.c-teal .ts { fill: #0F6E56; }
+.c-amber rect { fill: #FAEEDA; stroke: #854F0B; }
+.c-amber .th, .c-amber .t { fill: #412402; }
+.c-amber .ts { fill: #854F0B; }
+.arr { stroke: #5F5E5A; stroke-width: 1.5; fill: none; }
+</style>
+<marker id="arrow2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+<path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</marker>
+</defs>
+<g class="c-purple">
+<rect x="170" y="30" width="340" height="56" rx="8" stroke-width="0.5"/>
+<text class="th" x="340" y="50" text-anchor="middle" dominant-baseline="central">curated.fact_sales_daily</text>
+<text class="ts" x="340" y="68" text-anchor="middle" dominant-baseline="central">Source fact table</text>
+</g>
+<line x1="340" y1="86" x2="340" y2="120" class="arr" marker-end="url(#arrow2)"/>
+<g class="c-teal">
+<rect x="170" y="120" width="340" height="56" rx="8" stroke-width="0.5"/>
+<text class="th" x="340" y="140" text-anchor="middle" dominant-baseline="central">ml.top_skus</text>
+<text class="ts" x="340" y="158" text-anchor="middle" dominant-baseline="central">Top 200 SKUs by 2024 revenue</text>
+</g>
+<line x1="340" y1="176" x2="340" y2="210" class="arr" marker-end="url(#arrow2)"/>
+<g class="c-teal">
+<rect x="170" y="210" width="340" height="56" rx="8" stroke-width="0.5"/>
+<text class="th" x="340" y="230" text-anchor="middle" dominant-baseline="central">ml.arima_training_data</text>
+<text class="ts" x="340" y="248" text-anchor="middle" dominant-baseline="central">Series-level history, 5 years</text>
+</g>
+<line x1="340" y1="266" x2="340" y2="300" class="arr" marker-end="url(#arrow2)"/>
+<g class="c-teal">
+<rect x="100" y="300" width="480" height="68" rx="8" stroke-width="0.5"/>
+<text class="th" x="340" y="322" text-anchor="middle" dominant-baseline="central">CREATE MODEL ml.arima_top200</text>
+<text class="ts" x="340" y="340" text-anchor="middle" dominant-baseline="central">ARIMA_PLUS, holiday_region=US, auto p,d,q</text>
+<text class="ts" x="340" y="356" text-anchor="middle" dominant-baseline="central">BigQuery-native training</text>
+</g>
+<line x1="340" y1="368" x2="340" y2="402" class="arr" marker-end="url(#arrow2)"/>
+<g class="c-teal">
+<rect x="170" y="402" width="340" height="56" rx="8" stroke-width="0.5"/>
+<text class="th" x="340" y="422" text-anchor="middle" dominant-baseline="central">forecast.arima_top200_h28</text>
+<text class="ts" x="340" y="440" text-anchor="middle" dominant-baseline="central">Forecasts with 80% + 95% intervals</text>
+</g>
+<line x1="340" y1="458" x2="340" y2="492" class="arr" marker-end="url(#arrow2)"/>
+<g class="c-amber">
+<rect x="170" y="492" width="340" height="44" rx="8" stroke-width="0.5"/>
+<text class="th" x="340" y="514" text-anchor="middle" dominant-baseline="central">14,025-series MAPE: 32.61%</text>
+</g>
+</svg>

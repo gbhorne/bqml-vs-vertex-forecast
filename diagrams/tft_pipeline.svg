@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="680" height="700" viewBox="0 0 680 700" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>Vertex AI TFT pipeline detail</title>
+<desc>Detailed view of the Vertex AI Forecast pipeline: top-100 × top-30 selection through batch inference output.</desc>
+<defs>
+<style>
+text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", "Helvetica Neue", Arial, sans-serif; }
+.t { font-size: 14px; font-weight: 400; }
+.ts { font-size: 12px; font-weight: 400; }
+.th { font-size: 14px; font-weight: 500; }
+.c-purple rect { fill: #EEEDFE; stroke: #534AB7; }
+.c-purple .th, .c-purple .t { fill: #26215C; }
+.c-purple .ts { fill: #534AB7; }
+.c-coral rect { fill: #FAECE7; stroke: #993C1D; }
+.c-coral .th, .c-coral .t { fill: #4A1B0C; }
+.c-coral .ts { fill: #993C1D; }
+.c-amber rect { fill: #FAEEDA; stroke: #854F0B; }
+.c-amber .th, .c-amber .t { fill: #412402; }
+.c-amber .ts { fill: #854F0B; }
+.arr { stroke: #5F5E5A; stroke-width: 1.5; fill: none; }
+</style>
+<marker id="arrow3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+<path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</marker>
+</defs>
+<g class="c-purple">
+<rect x="170" y="30" width="340" height="56" rx="8" stroke-width="0.5"/>
+<text class="th" x="340" y="50" text-anchor="middle" dominant-baseline="central">curated.fact_sales_daily</text>
+<text class="ts" x="340" y="68" text-anchor="middle" dominant-baseline="central">Source fact table</text>
+</g>
+<line x1="340" y1="86" x2="340" y2="120" class="arr" marker-end="url(#arrow3)"/>
+<g class="c-coral">
+<rect x="100" y="120" width="480" height="68" rx="8" stroke-width="0.5"/>
+<text class="th" x="340" y="142" text-anchor="middle" dominant-baseline="central">ml.tft_training_data</text>
+<text class="ts" x="340" y="160" text-anchor="middle" dominant-baseline="central">Wide table with 14 covariates</text>
+<text class="ts" x="340" y="176" text-anchor="middle" dominant-baseline="central">Top 100 SKUs × Top 30 stores by 2024 revenue</text>
+</g>
+<line x1="340" y1="188" x2="340" y2="222" class="arr" marker-end="url(#arrow3)"/>
+<g class="c-coral">
+<rect x="170" y="222" width="340" height="56" rx="8" stroke-width="0.5"/>
+<text class="th" x="340" y="242" text-anchor="middle" dominant-baseline="central">Vertex TimeSeriesDataset</text>
+<text class="ts" x="340" y="260" text-anchor="middle" dominant-baseline="central">CMEK-encrypted, BQ-backed</text>
+</g>
+<line x1="340" y1="278" x2="340" y2="312" class="arr" marker-end="url(#arrow3)"/>
+<g class="c-coral">
+<rect x="60" y="312" width="560" height="80" rx="8" stroke-width="0.5"/>
+<text class="th" x="340" y="334" text-anchor="middle" dominant-baseline="central">AutoML Forecasting training</text>
+<text class="ts" x="340" y="352" text-anchor="middle" dominant-baseline="central">28-day horizon, 180-day context, quantile loss</text>
+<text class="ts" x="340" y="368" text-anchor="middle" dominant-baseline="central">3 node-hour budget cap</text>
+<text class="ts" x="340" y="384" text-anchor="middle" dominant-baseline="central">AutoML architecture search</text>
+</g>
+<line x1="340" y1="392" x2="340" y2="426" class="arr" marker-end="url(#arrow3)"/>
+<g class="c-coral">
+<rect x="170" y="426" width="340" height="56" rx="8" stroke-width="0.5"/>
+<text class="th" x="340" y="446" text-anchor="middle" dominant-baseline="central">Model Registry</text>
+<text class="ts" x="340" y="464" text-anchor="middle" dominant-baseline="central">tft-retail-top100-v1</text>
+</g>
+<line x1="340" y1="482" x2="340" y2="516" class="arr" marker-end="url(#arrow3)"/>
+<g class="c-coral">
+<rect x="60" y="516" width="560" height="68" rx="8" stroke-width="0.5"/>
+<text class="th" x="340" y="538" text-anchor="middle" dominant-baseline="central">BatchPredictionJob</text>
+<text class="ts" x="340" y="556" text-anchor="middle" dominant-baseline="central">Context + horizon table, autoscaling 2-5 replicas</text>
+<text class="ts" x="340" y="572" text-anchor="middle" dominant-baseline="central">BigQuery source and destination</text>
+</g>
+<line x1="340" y1="584" x2="340" y2="618" class="arr" marker-end="url(#arrow3)"/>
+<g class="c-amber">
+<rect x="170" y="618" width="340" height="56" rx="8" stroke-width="0.5"/>
+<text class="th" x="340" y="638" text-anchor="middle" dominant-baseline="central">forecast.predictions</text>
+<text class="ts" x="340" y="656" text-anchor="middle" dominant-baseline="central">Predictions with 3 quantiles</text>
+</g>
+</svg>

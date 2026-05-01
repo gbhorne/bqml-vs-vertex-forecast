@@ -1,0 +1,25 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# Data (large Parquet files)
+data/sales/
+data/catalog/
+*.parquet
+
+# Secrets and local config
+.env
+*.key
+*-key.json
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs
+*.log

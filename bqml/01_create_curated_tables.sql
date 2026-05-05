@@ -67,3 +67,4 @@ SELECT
 FROM raw.sales_facts_raw AS s
 JOIN raw.stores AS st USING (store_id)
 JOIN raw.skus   AS sk USING (sku_id);
+-- pipeline v1

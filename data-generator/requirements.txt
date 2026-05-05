@@ -4,3 +4,4 @@ pyarrow>=17.0
 tqdm>=4.66
 google-cloud-storage>=2.18
 google-cloud-bigquery>=3.25
+# v1

@@ -15,7 +15,7 @@ WITH
       sku_id,
       PARSE_DATE('%Y-%m-%d', sale_date) AS sale_date,
       CAST(predicted_units_sold.value AS FLOAT64) AS predicted
-    FROM forecast.predictions_2026_04_30T15_59_03_716Z_533
+    FROM forecast.predictions_<timestamp>
   ),
 
   -- ARIMA predictions for the same dates

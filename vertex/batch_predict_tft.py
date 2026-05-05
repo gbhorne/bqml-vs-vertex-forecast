@@ -2,13 +2,13 @@
 vertex/batch_predict_tft.py
 Submits a Vertex AI batch prediction job using the trained TFT model.
 
-Reads from: bq://gcp-retail-prediction.ml.tft_prediction_request
-Writes to:  bq://gcp-retail-prediction.forecast.tft_predictions_<timestamp>
+Reads from:  bq://{PROJECT_ID}.ml.tft_prediction_request
+Writes to:   bq://{PROJECT_ID}.forecast.predictions_<timestamp>
 
 Run:
     python vertex/batch_predict_tft.py
 
-Takes 15-30 minutes. Synchronous - blocks until complete.
+Synchronous — blocks until complete (typically 15-30 minutes).
 """
 
 from __future__ import annotations
@@ -19,15 +19,14 @@ from datetime import datetime
 from google.cloud import aiplatform
 
 
-PROJECT_ID = os.environ["PROJECT_ID"]
-REGION = os.environ["REGION"]
+PROJECT_ID          = os.environ["PROJECT_ID"]
+REGION              = os.environ["REGION"]
 KMS_KEY_VERTEX_PATH = os.environ["KMS_KEY_VERTEX_PATH"]
 
-MODEL_DISPLAY_NAME = "tft-retail-top100-v1"
-JOB_DISPLAY_NAME = f"tft-batch-predict-{datetime.utcnow():%Y%m%d-%H%M%S}"
-
-BQ_SOURCE_URI = f"bq://{PROJECT_ID}.ml.tft_prediction_request"
-BQ_DESTINATION_PREFIX = f"bq://{PROJECT_ID}.forecast"
+MODEL_DISPLAY_NAME      = "tft-retail-forecast-v1"
+JOB_DISPLAY_NAME        = f"tft-batch-predict-{datetime.utcnow():%Y%m%d-%H%M%S}"
+BQ_SOURCE_URI           = f"bq://{PROJECT_ID}.ml.tft_prediction_request"
+BQ_DESTINATION_PREFIX   = f"bq://{PROJECT_ID}.forecast"
 
 
 def main():
@@ -38,9 +37,6 @@ def main():
         encryption_spec_key_name=KMS_KEY_VERTEX_PATH,
     )
 
-    # ─────────────────────────────────────────────────────────────────
-    # Find the trained model by display name
-    # ─────────────────────────────────────────────────────────────────
     print(f"\nLooking up model '{MODEL_DISPLAY_NAME}'...")
     models = aiplatform.Model.list(filter=f'display_name="{MODEL_DISPLAY_NAME}"')
     if not models:
@@ -49,11 +45,7 @@ def main():
     model = models[0]
     print(f"  Found: {model.resource_name}")
 
-    # ─────────────────────────────────────────────────────────────────
-    # Submit the batch prediction job (synchronous)
-    # ─────────────────────────────────────────────────────────────────
     print(f"\nSubmitting batch prediction job '{JOB_DISPLAY_NAME}'...")
-    print("This will block for 15-30 minutes.\n")
 
     batch_job = model.batch_predict(
         job_display_name=JOB_DISPLAY_NAME,
@@ -80,5 +72,4 @@ if __name__ == "__main__":
         main()
     except KeyError as e:
         print(f"ERROR: missing environment variable {e}", file=sys.stderr)
-        print("Did you dot-source config/project.ps1?", file=sys.stderr)
         sys.exit(1)

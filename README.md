@@ -1,24 +1,21 @@
 # GCP Retail Demand Forecasting
 
-**Production-shaped retail demand forecasting benchmark on Google Cloud — comparing BQML ARIMA_PLUS against Vertex AI Forecast (Temporal Fusion Transformer) on 7 years of synthetic retail data.**
+> Built April 2026. All data is synthetically generated. No real retailer information was used.
 
-[![Built on GCP](https://img.shields.io/badge/Built%20on-GCP-4285F4)]()
-[![BigQuery ML](https://img.shields.io/badge/BigQuery%20ML-ARIMA__PLUS-4285F4)]()
-[![Vertex AI](https://img.shields.io/badge/Vertex%20AI-Forecast%20TFT-34A853)]()
-[![CMEK](https://img.shields.io/badge/Encryption-CMEK-EA4335)]()
+**Production-shaped retail demand forecasting benchmark on Google Cloud, comparing BQML ARIMA_PLUS against Vertex AI Forecast (Temporal Fusion Transformer) on 7 years of synthetic retail data.**
 
 ---
 
-## Headline result
+## Headline Result
 
-On a 28-day holdout, the same 2,820 retail series, weighted MAPE (also known as WAPE — see [methodology note](#methodology-and-limits) below):
+On a 28-day holdout across the same 2,820 retail series, weighted MAPE (also known as WAPE, see [methodology note](#methodology-and-limits) below):
 
-| Model | Architecture | Series | Train time | Cost | **WAPE** |
-|-------|--------------|--------|-----------|------|----------|
-| BQML ARIMA_PLUS | Univariate, holiday-detected | 15,000 | 3 min | ~$2 | 32.6% |
-| Vertex AI Forecast (TFT) | Multivariate, 14 covariates | 3,000 | 4h 18m | ~$15-25 | **16.9%** |
+| Model | Architecture | Series | Train time | WAPE |
+|-------|--------------|--------|-----------|------|
+| BQML ARIMA_PLUS | Univariate, holiday-detected | 15,000 | 3 min | 32.6% |
+| Vertex AI Forecast (TFT) | Multivariate, 14 covariates | 3,000 | 4h 18m | **16.9%** |
 
-**44% relative WAPE reduction.** Same 2,820 series eval: ARIMA 30.08% → TFT 16.92%, a 13.16 percentage-point absolute drop. The largest measured gaps occurred on holiday and promotion days, which strongly suggests the explicit covariates ARIMA cannot consume — `promo_flag`, `weather_temp_f`, `is_holiday` — drove much of the improvement.
+**44% relative WAPE reduction.** Same 2,820 series eval: ARIMA 30.08% vs TFT 16.92%, a 13.16 percentage-point absolute drop. The largest measured gaps occurred on holiday and promotion days, which strongly suggests the explicit covariates ARIMA cannot consume, `promo_flag`, `weather_temp_f`, `is_holiday`, drove much of the improvement.
 
 The most striking finding is on holidays: ARIMA hit **77.27% WAPE** on holiday days vs TFT's **25.75%**, a 51-point swing. On promotion days: ARIMA 40.06% vs TFT 16.37%, a 24-point swing. These are direct, measured day-type effects.
 
@@ -26,62 +23,52 @@ The most striking finding is on holidays: ARIMA hit **77.27% WAPE** on holiday d
 
 ---
 
-## Project scope
+## Project Scope
 
 This is a complete forecasting pipeline, not a notebook demo:
 
-- **Synthetic data generator** producing 118.6M rows of realistic retail transactions across 75 stores, 700 SKUs, 7 years, with calibrated seasonality, promotions, weather effects, and SKU lifecycle behavior
-- **Curated BigQuery layer** with partitioning, clustering, and denormalized dimensions (33.7 GB)
+- **Synthetic data generator** producing a large volume of realistic retail transactions across 75 stores, 700 SKUs, and 7 years, with calibrated seasonality, promotions, weather effects, and SKU lifecycle behavior
+- **Curated BigQuery layer** with partitioning, clustering, and denormalized dimensions
 - **Two parallel ML pipelines**: a BQML statistical baseline and a Vertex AI deep-learning challenger
 - **Apples-to-apples evaluation harness** comparing both on identical holdout windows
 - **Production security baseline**: customer-managed encryption keys (CMEK), 5 service accounts on least-privilege, 90-day key rotation
-- **Cost discipline**: full project end-to-end under $35
 
 Total scale:
 
 | Dimension | Count |
 |-----------|-------|
-| Fact rows | 118,596,900 |
 | Stores | 75 (50 flagship + 25 satellite, 25 metros) |
 | SKUs | 700 across 7 categories |
-| Date range | 2019-01-01 → 2025-12-31 |
-| Total revenue | $52.45B (synthetic) |
+| Date range | 2019-01-01 to 2025-12-31 |
 | Models trained | 2 (BQML + Vertex AI) |
 | Series forecasted | 14,025 (ARIMA) + 2,820 (TFT) |
 | Total predictions | 498,960 |
 
 ---
 
-## Why this exists
+## Why This Exists
 
-Retail demand forecasting is a textbook ML problem with two textbook approaches: classical statistical methods (ARIMA family) and modern deep-learning methods (TFT, N-BEATS, DeepAR). Both are documented in the literature. What's missing in most public material is a clean, reproducible, **same-data same-evaluation** comparison that quantifies what you actually gain from the more expensive model.
+Retail demand forecasting is a textbook ML problem with two textbook approaches: classical statistical methods (ARIMA family) and modern deep-learning methods (TFT, N-BEATS, DeepAR). Both are documented in the literature. What's missing in most public material is a clean, reproducible, **same-data same-evaluation** comparison that quantifies what you actually gain from the more complex model.
 
 This project answers that question concretely on production-shaped data:
 
-- **What's the headline MAPE difference?** 44% relative reduction
+- **What's the headline WAPE difference?** 44% relative reduction
 - **Where does that difference come from?** Specific covariate effects, measurable per day-type
-- **What does it cost?** Roughly an order of magnitude more than the statistical baseline (~$20 vs ~$2)
-- **Is it worth it?** Depends on whether your business cares more about forecast accuracy on holiday/promo days (where TFT crushes ARIMA) than on training cost
+- **Is it worth it?** Depends on whether your business cares more about forecast accuracy on holiday and promo days, where TFT significantly outperforms ARIMA, than on training time
 
 The result is a defensible benchmark suitable for informing production model selection, not a tutorial.
 
 ---
 
-## What's in this repository
+## What's in This Repository
 
 ```
 bqml-vs-vertex-forecast/
 ├── README.md                    # this file
 ├── ARCHITECTURE_bqml.md         # deep technical architecture
 ├── QA.md                        # design + engineering Q&A
-├── config/
-│   └── project.ps1              # env vars, paths, identifiers
-├── data-generator/
-│   ├── catalog.py               # store + SKU master data generator
-│   ├── generate.py              # multiplicative demand model
-│   └── requirements.txt
 ├── bqml/
-│   ├── 01_create_curated_tables.sql      # raw → curated layer
+│   ├── 01_create_curated_tables.sql      # raw to curated layer
 │   ├── 02_top_skus.sql                   # top-N SKU selection
 │   ├── 03_arima_training_data.sql        # ARIMA series build
 │   ├── 04_train_arima.sql                # BQML ARIMA_PLUS training
@@ -99,57 +86,57 @@ For the full architectural rationale, design decisions, security model, and oper
 
 ---
 
-## Per-category breakdown
+## Per-Category Breakdown
 
-| Category | Series | ARIMA MAPE | TFT MAPE | Δ pp | Relative |
-|----------|--------|-----------|----------|------|----------|
+| Category | Series | ARIMA WAPE | TFT WAPE | Delta pp | Relative |
+|----------|--------|-----------|----------|----------|----------|
 | Apparel | 990 | 30.00% | 16.83% | -13.17 | 44% |
 | Electronics | 1,470 | 30.64% | 17.90% | -12.74 | 42% |
 | Home_Goods | 540 | 29.23% | 15.33% | -13.90 | 48% |
 | **Overall** | **3,000** | **30.08%** | **16.92%** | **-13.16** | **44%** |
 
-Top-100-SKUs-by-revenue is dominated by high-price categories. Beverages, Snacks, and Health_Beauty don't appear because they're price-suppressed in the revenue ranking. The broader 14,025-series ARIMA evaluation across all 7 categories produced 32.6% MAPE.
+Top-100-SKUs-by-revenue is dominated by high-price categories. Beverages, Snacks, and Health_Beauty don't appear because they're price-suppressed in the revenue ranking. The broader 14,025-series ARIMA evaluation across all 7 categories produced 32.6% WAPE.
 
 ---
 
-## Why TFT wins — covariate effects
+## Why TFT Wins: Covariate Effects
 
-The 13-MAPE-point gap is not a generic deep-learning improvement. It's a measurable, attributable effect of three specific covariates ARIMA structurally cannot see.
+The 13-percentage-point gap is not a generic deep-learning improvement. It's a measurable, attributable effect of three specific covariates ARIMA structurally cannot see.
 
-### Holiday accuracy (smoking gun #1)
+### Holiday Accuracy
 
-| Day type | n | ARIMA MAPE | TFT MAPE | Δ pp |
-|----------|---|-----------|----------|------|
+| Day type | n | ARIMA WAPE | TFT WAPE | Delta pp |
+|----------|---|-----------|----------|----------|
 | Holiday | 2,809 | **77.27%** | 25.75% | **51.52** |
 | Non-Holiday | 76,021 | 29.20% | 16.75% | 12.44 |
 
 ARIMA's holiday accuracy is catastrophic. BQML's automatic holiday detection works from residual patterns; on a single short evaluation window with one major holiday (New Year's Day), the inference fails. TFT consumed `is_holiday` as an explicit feature and predicted holiday demand correctly.
 
-### Promotion accuracy (smoking gun #2)
+### Promotion Accuracy
 
-| Day type | n | ARIMA MAPE | TFT MAPE | Δ pp |
-|----------|---|-----------|----------|------|
+| Day type | n | ARIMA WAPE | TFT WAPE | Delta pp |
+|----------|---|-----------|----------|----------|
 | Promo | 9,413 | **40.06%** | 16.37% | **23.69** |
 | Non-Promo | 69,417 | 27.71% | 17.05% | 10.66 |
 
-Promotion days produce 1.5–2.5× volume spikes. ARIMA cannot see `promo_flag` and so predicts baseline demand. TFT consumed the future promo schedule and predicted the spike. This is the cleanest covariate-attribution finding in the project.
+Promotion days produce 1.5-2.5x volume spikes. ARIMA cannot see `promo_flag` and so predicts baseline demand. TFT consumed the future promo schedule and predicted the spike. This is the cleanest covariate-attribution finding in the project.
 
-### Weekend vs weekday (control)
+### Weekend vs Weekday (Control)
 
-| Day type | n | ARIMA MAPE | TFT MAPE |
+| Day type | n | ARIMA WAPE | TFT WAPE |
 |----------|---|-----------|----------|
 | Weekday | 56,287 | 32.57% | 17.87% |
 | Weekend | 22,543 | 25.63% | 15.22% |
 
-Both models capture day-of-week structure. ARIMA via autocorrelation in seasonal components; TFT via explicit features. Both improved similarly — confirmation that the TFT advantage is specifically about covariates ARIMA can't see, not about generic model capacity.
+Both models capture day-of-week structure. ARIMA via autocorrelation in seasonal components; TFT via explicit features. Both improved similarly, confirmation that the TFT advantage is specifically about covariates ARIMA can't see, not about generic model capacity.
 
 ---
 
-## Showcase: where TFT recovers most
+## Showcase: Where TFT Recovers Most
 
-Top 5 series by MAPE improvement, ARIMA vs TFT:
+Top 5 series by WAPE improvement, ARIMA vs TFT:
 
-| Store | SKU | Category | Volume | ARIMA MAPE | TFT MAPE | Improvement |
+| Store | SKU | Category | Volume | ARIMA WAPE | TFT WAPE | Improvement |
 |-------|-----|----------|--------|-----------|----------|-------------|
 | S0051 | SKU00336 | Apparel | 281 | 277.04% | 23.01% | **254 pp** |
 | S0010 | SKU00426 | Home_Goods | 374 | 127.74% | 21.19% | 107 pp |
@@ -157,46 +144,46 @@ Top 5 series by MAPE improvement, ARIMA vs TFT:
 | S0053 | SKU00271 | Apparel | 458 | 81.64% | 23.35% | 58 pp |
 | S0051 | SKU00357 | Electronics | 258 | 93.91% | 35.83% | 58 pp |
 
-These are series where ARIMA's univariate decomposition went badly wrong — likely from lifecycle discontinuities or regime shifts. TFT's static lifecycle attribute and rich covariate history stabilized predictions in the 18-35% MAPE range.
+These are series where ARIMA's univariate decomposition went badly wrong, likely from lifecycle discontinuities or regime shifts. TFT's static lifecycle attribute and rich covariate history stabilized predictions in the 18-35% WAPE range.
 
-### Day-by-day proof, S0015_SKU00386 (Electronics)
+### Day-by-Day Proof, S0015_SKU00386 (Electronics)
 
 | Date | Day | Actual | ARIMA | TFT | Promo | Holiday |
 |------|-----|--------|-------|-----|-------|---------|
-| Jan 1 | Wed | 1 | 5.2 | 3.7 | – | ✓ |
-| Jan 10 | Fri | 13 | 9.0 | **12.4** | ✓ | – |
-| Jan 19 | Sun | 6 | -0.3 | **13.6** | ✓ | – |
-| Jan 28 | Tue | 11 | 5.8 | **8.9** | ✓ | – |
+| Jan 1 | Wed | 1 | 5.2 | 3.7 | - | Yes |
+| Jan 10 | Fri | 13 | 9.0 | **12.4** | Yes | - |
+| Jan 19 | Sun | 6 | -0.3 | **13.6** | Yes | - |
+| Jan 28 | Tue | 11 | 5.8 | **8.9** | Yes | - |
 
-On every promotion day, ARIMA flatlines or goes negative. TFT tracks the actual spike. This is what 24 percentage points of promo-day improvement looks like at the row level.
+On every promotion day, ARIMA flatlines or goes negative. TFT tracks the actual spike.
 
 ---
 
-## Methodology and limits
+## Methodology and Limits
 
 This benchmark is a fair comparison of two forecasting approaches on the same data, with the following constraints made explicit:
 
-**Synthetic data.** All 118.6M rows are generated by the multiplicative demand model in `data-generator/`. The generator is calibrated to produce realistic seasonality, promotion lifts, holiday effects, weather sensitivity, and SKU lifecycle behavior, but it is not real consumer behavior. Results should not be interpreted as benchmarks for general retail demand forecasting.
+**Synthetic data.** All rows are generated by a multiplicative demand model calibrated to produce realistic seasonality, promotion lifts, holiday effects, weather sensitivity, and SKU lifecycle behavior. Results should not be interpreted as benchmarks for general retail demand forecasting.
 
-**Metric.** The headline "WAPE" / "weighted MAPE" is computed as `SUM(ABS(predicted - actual)) / SUM(actual)`. This is technically the Weighted Absolute Percentage Error, sometimes called WAPE in the forecasting literature. It differs from row-level MAPE (`AVG(ABS(predicted - actual) / actual)`) and is more robust to small-denominator pathology in low-volume series. The two terms are used interchangeably in this repo; "WAPE" is the more precise name.
+**Metric.** The headline WAPE is computed as `SUM(ABS(predicted - actual)) / SUM(actual)`. This differs from row-level MAPE and is more robust to small-denominator pathology in low-volume series.
 
-**Zero-actual exclusion.** The evaluation filters `WHERE units_sold > 0` because percentage error is undefined when actual demand is zero. This means the benchmark does not measure either model's ability to predict zero-demand days correctly. A production deployment would supplement WAPE with a separate metric for that.
+**Zero-actual exclusion.** The evaluation filters `WHERE units_sold > 0` because percentage error is undefined when actual demand is zero.
 
-**Series subset for TFT.** TFT was trained on 3,000 series (top 100 SKUs × top 30 stores by 2024 revenue) due to AutoML cost and scale constraints. The head-to-head comparison filters ARIMA's predictions to the 2,820 series that survived TFT batch inference. The full 14,025-series ARIMA result (32.6% WAPE) is reported separately for reference.
+**Series subset for TFT.** TFT was trained on 3,000 series due to AutoML scale constraints. The head-to-head comparison filters ARIMA's predictions to the 2,820 series that survived TFT batch inference. The full 14,025-series ARIMA result (32.6% WAPE) is reported separately.
 
-**Day-type attribution is correlation, not causation.** The 51-point holiday gap and 24-point promo gap are observed effects on day-type subsets, not the result of formal ablation studies. They strongly suggest the covariates (`promo_flag`, `is_holiday`) are responsible, but a clean causal claim would require leave-one-feature-out training runs. See [v2 improvements](#v2-improvements) below.
+**Day-type attribution is correlation, not causation.** The 51-point holiday gap and 24-point promo gap are observed effects on day-type subsets, not the result of formal ablation studies.
 
-**ARIMA_PLUS does have holiday support.** BQML's ARIMA_PLUS includes built-in holiday detection via `holiday_region='US'`. The criticism here is not that ARIMA_PLUS lacks holiday awareness — it has it — but that it cannot consume the explicit `is_holiday`, `promo_flag`, and `weather_temp_f` columns as exogenous covariates the way TFT can.
+**ARIMA_PLUS does have holiday support.** BQML's ARIMA_PLUS includes built-in holiday detection via `holiday_region='US'`. The limitation is that it cannot consume explicit exogenous covariates like `promo_flag` and `weather_temp_f` the way TFT can.
 
-**Top-N global selection.** Top-100 SKUs by global revenue is dominated by high-price categories (Electronics, Apparel, Home_Goods). Lower-price, high-volume categories like Beverages drop out of the comparison entirely. v2 should use top-N-per-category for balanced coverage.
+**Top-N global selection.** Top-100 SKUs by global revenue is dominated by high-price categories. Lower-price, high-volume categories like Beverages drop out of the comparison.
 
 ---
 
-## Where TFT struggles
+## Where TFT Struggles
 
-Top 5 series by TFT MAPE (filtered to volume > 50 to exclude small-denominator pathology):
+Top 5 series by TFT WAPE (filtered to volume > 50):
 
-| Store | SKU | Category | Volume | TFT MAPE |
+| Store | SKU | Category | Volume | TFT WAPE |
 |-------|-----|----------|--------|----------|
 | S0009 | SKU00408 | Electronics | 138 | 52.46% |
 | S0044 | SKU00360 | Electronics | 72 | 51.35% |
@@ -204,41 +191,30 @@ Top 5 series by TFT MAPE (filtered to volume > 50 to exclude small-denominator p
 | S0035 | SKU00360 | Electronics | 54 | 49.79% |
 | S0027 | SKU00360 | Electronics | 77 | 47.23% |
 
-Four of five are SKU00360 across different stores — same SKU, different locations, all bad. This is a model-level signal indicating a specific SKU or pricing pattern the TFT model didn't fit. A production deployment would investigate this individually rather than treating it as random tail noise.
+Four of five are SKU00360 across different stores: same SKU, different locations, all performing poorly. This is a model-level signal indicating a specific SKU or pricing pattern the TFT model didn't fit. A production deployment would investigate this individually rather than treating it as random tail noise.
 
 ---
 
-## v2 improvements
+## v2 Improvements
 
-The areas where the current build leaves measurable gains on the table:
-
-- **TFT ablation tests** — leave-one-feature-out training runs to attribute the WAPE gap to specific covariates with statistical confidence rather than correlation
-- **Top-N-per-category sampling** — ensure balanced coverage across all 7 categories instead of revenue-weighted skew
-- **WAPE + sMAPE + RMSE + RMSSE side-by-side** — single-metric benchmarks hide model behavior; multiple metrics reveal it
-- **ARIMA_PLUS with custom holidays** — pass an explicit holiday calendar to ARIMA_PLUS for a fairer same-information comparison
-- **Latest-predictions view** — replace the hardcoded `forecast.predictions_<timestamp>` table reference with a view that auto-resolves to the most recent batch prediction output (the current "dirtiest hack" — see [`QA.md`](QA.md))
-- **Composer DAG + Cloud Build** — orchestration and CI/CD for repeatable production runs
+- **TFT ablation tests**: leave-one-feature-out training runs to attribute the WAPE gap to specific covariates with statistical confidence rather than correlation
+- **Top-N-per-category sampling**: ensure balanced coverage across all 7 categories instead of revenue-weighted skew
+- **WAPE + sMAPE + RMSE + RMSSE side-by-side**: single-metric benchmarks hide model behavior
+- **ARIMA_PLUS with custom holidays**: pass an explicit holiday calendar to ARIMA_PLUS for a fairer same-information comparison
+- **Latest-predictions view**: replace the hardcoded `forecast.predictions_<timestamp>` table reference with a view that auto-resolves to the most recent batch prediction output
+- **Composer DAG + Cloud Build**: orchestration and CI/CD for repeatable production runs
 
 ---
 
-## Cost summary
+## License
 
-| Component | Cost |
-|-----------|------|
-| BigQuery storage (118.6M rows / 33.7 GB) | < $1/month |
-| BigQuery query execution (all eval queries) | ~$1 |
-| BQML ARIMA_PLUS training (15K series) | ~$2 |
-| Vertex AI Forecast training (TFT, 4h 18m) | ~$15-25 |
-| Vertex AI batch prediction (78,960 points) | ~$3-5 |
-| Cloud Storage, KMS, dataset hosting | < $1 |
-| **Total** | **~$20-35** |
-
-Total project cost is bounded by a Vertex AI training budget cap of 3 node-hours, ceiling $64. AutoML finished within budget.
+MIT
 
 ---
 
-## License & contact
+## Author
 
-MIT licensed. Issues, comments, and forks welcome.
+**Gregory B. Horne**
+Cloud Solutions Architect
 
-Built April 2026. All synthetic data, no real retailer information was used.
+[GitHub: gbhorne](https://github.com/gbhorne) | [LinkedIn](https://linkedin.com/in/gbhorne)

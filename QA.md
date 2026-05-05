@@ -1,4 +1,4 @@
-# Q&A — Design and engineering decisions
+# Q&A : Design and engineering decisions
 
 Answers to questions someone reviewing this work might ask. Organized by what an engineer or hiring manager would push on. No marketing language; the answers are honest, including where the project has limits or where I'd do things differently.
 
@@ -8,23 +8,23 @@ Answers to questions someone reviewing this work might ask. Organized by what an
 
 ### Why "weighted MAPE" / WAPE? Why not pure MAPE, RMSE, sMAPE, or RMSSE?
 
-First, a naming clarification. The headline metric in this project is computed as `SUM(ABS(predicted - actual)) / SUM(actual)`. This is technically the Weighted Absolute Percentage Error (WAPE), not row-level MAPE. Pure MAPE would be `AVG(ABS(predicted - actual) / actual)`. The two metrics agree on uniform-volume data but diverge sharply when demand is unevenly distributed across series — which is exactly the case for retail. I use "weighted MAPE" and "WAPE" interchangeably throughout the docs because both terms are common in industry. WAPE is the more precise name.
+First, a naming clarification. The headline metric in this project is computed as `SUM(ABS(predicted - actual)) / SUM(actual)`. This is technically the Weighted Absolute Percentage Error (WAPE), not row-level MAPE. Pure MAPE would be `AVG(ABS(predicted - actual) / actual)`. The two metrics agree on uniform-volume data but diverge sharply when demand is unevenly distributed across series : which is exactly the case for retail. I use "weighted MAPE" and "WAPE" interchangeably throughout the docs because both terms are common in industry. WAPE is the more precise name.
 
 Why this metric:
 
 First, retail finance teams already use percentage error as the language for forecast accuracy. Reporting in WAPE keeps the result comprehensible to the business audience.
 
-Second, WAPE is robust to the small-denominator pathology that breaks row-level MAPE. If one series sells 1 unit and we predict 5, that's 400% MAPE on that row — pure MAPE averages this in, and a few low-volume series can dominate the metric. WAPE weights by volume, so the overall number reflects model performance on the bulk of demand rather than on a handful of noisy small-volume tails. This is the metric Walmart, Amazon, and Kaggle's M5 competition use.
+Second, WAPE is robust to the small-denominator pathology that breaks row-level MAPE. If one series sells 1 unit and we predict 5, that's 400% MAPE on that row : pure MAPE averages this in, and a few low-volume series can dominate the metric. WAPE weights by volume, so the overall number reflects model performance on the bulk of demand rather than on a handful of noisy small-volume tails. This is the metric Walmart, Amazon, and Kaggle's M5 competition use.
 
 Third, it's directly interpretable: a 16.92% WAPE means "the forecast is off by ~17% of total actual demand."
 
-RMSE is better for optimization but harder to communicate. sMAPE handles zeros but produces values bounded between 0 and 200% which is confusing. RMSSE is mathematically cleaner but requires computing a naive baseline first. For a portfolio-grade benchmark, WAPE is the right choice — defensible and interpretable.
+RMSE is better for optimization but harder to communicate. sMAPE handles zeros but produces values bounded between 0 and 200% which is confusing. RMSSE is mathematically cleaner but requires computing a naive baseline first. For a portfolio-grade benchmark, WAPE is the right choice : defensible and interpretable.
 
 ### Why a 28-day holdout? Why not longer?
 
-Because that's a realistic operational horizon for retail planning. Most retailers run weekly forecast cycles with a 4-week lookahead — 28 days fits that. Longer horizons (quarterly, yearly) require fundamentally different modeling approaches because compounding uncertainty dominates. For day-level demand forecasting, 28 days is the standard window.
+Because that's a realistic operational horizon for retail planning. Most retailers run weekly forecast cycles with a 4-week lookahead : 28 days fits that. Longer horizons (quarterly, yearly) require fundamentally different modeling approaches because compounding uncertainty dominates. For day-level demand forecasting, 28 days is the standard window.
 
-There's also a practical reason: with 28 days × 2,820 series, we get 78,960 prediction points to evaluate. That's enough sample size to be statistically meaningful per category and per day-type breakdown. A 7-day holdout would reduce to under 20,000 — too noisy for the per-day-type analysis.
+There's also a practical reason: with 28 days × 2,820 series, we get 78,960 prediction points to evaluate. That's enough sample size to be statistically meaningful per category and per day-type breakdown. A 7-day holdout would reduce to under 20,000 : too noisy for the per-day-type analysis.
 
 ### Why January 2025 specifically?
 
@@ -56,17 +56,17 @@ The trade-off is realism. My multiplicative model is calibrated to match publish
 
 Because retail demand is multiplicative in practice. A 50% promotion doesn't add 5 units; it multiplies baseline demand by ~1.5×. Weather doesn't add units; it scales demand. Holidays don't add a fixed lift; they multiply. Multiplicative models match the underlying physics of consumer behavior.
 
-The alternative — additive (`demand = base + promo + weather + ...`) — would generate negative demand on low days when promo and weather coefficients are negative. Multiplicative models stay positive by construction.
+The alternative : additive (`demand = base + promo + weather + ...`) : would generate negative demand on low days when promo and weather coefficients are negative. Multiplicative models stay positive by construction.
 
 ### Why top-200 SKUs for ARIMA but top-100 × top-30 stores for TFT?
 
-Cost and scale. AutoML scales worse than ARIMA with series count — training time grows roughly linearly with the number of series, and each additional series adds compute cost. ARIMA on 15,000 series fit in 3 minutes for $2; TFT on 15,000 would have taken 20+ hours and cost hundreds of dollars.
+Cost and scale. AutoML scales worse than ARIMA with series count : training time grows roughly linearly with the number of series, and each additional series adds compute cost. ARIMA on 15,000 series fit in 3 minutes; TFT on 15,000 would have taken 20+ hours at significantly higher compute cost.
 
 3,000 series was the sweet spot: enough to cover the meaningful business volume (covering ~70% of revenue), small enough to fit in the 3-node-hour budget cap. The trade-off is we're training on a smaller subset, but we apply the same filter to ARIMA at evaluation time, so the comparison is fair.
 
 ### Why are Beverages, Snacks, and Health_Beauty missing from the TFT evaluation?
 
-Because top-100 SKUs by revenue is dominated by high-price categories. A $200 Electronics SKU at 1 unit/day generates more revenue than a $5 Beverages SKU at 30 units/day. So the top-100 cut squeezes out lower-price categories.
+Because top-100 SKUs by revenue is dominated by high-price categories. A high-price Electronics SKU at 1 unit/day generates more revenue than a low-price Beverages SKU at 30 units/day. So the top-100 cut squeezes out lower-price categories.
 
 This is a methodological limitation worth being transparent about. A production deployment would use top-N-per-category instead of global top-N to ensure balanced coverage. I noted this in the writeup as future work. For the benchmark comparison, what matters is that ARIMA and TFT both saw the same series subset.
 
@@ -78,13 +78,13 @@ Because retail demand has strong yearly seasonality and TFT needs roughly 6 mont
 
 Two reasons. First, retail decisions are asymmetric: overstocking costs warehouse space, understocking loses sales. The 0.9 quantile (high estimate) is what supply chain teams plan to. RMSE optimizes the conditional mean, which understocks systematically when demand is right-skewed.
 
-Second, the API forced it. AutoML rejects `quantiles=[0.1, 0.5, 0.9]` with `optimization_objective="minimize-rmse"` — they're inconsistent. If we wanted prediction intervals (which we did, to match ARIMA's output), quantile loss was required.
+Second, the API forced it. AutoML rejects `quantiles=[0.1, 0.5, 0.9]` with `optimization_objective="minimize-rmse"` : they're inconsistent. If we wanted prediction intervals (which we did, to match ARIMA's output), quantile loss was required.
 
 The point estimate from quantile loss is the median (P50), not the mean. For symmetric distributions these are the same; for retail demand (right-skewed), the median is slightly lower than the mean. This is a more conservative point estimate, which is fine for the comparison and arguably better for inventory planning.
 
 ### Why didn't the TFT model use price elasticity directly as a covariate?
 
-It does — `price` is in `available_at_forecast_columns`. The model has access to actual selling price (which differs from `regular_price` on promotion days) and can learn elasticity implicitly.
+It does : `price` is in `available_at_forecast_columns`. The model has access to actual selling price (which differs from `regular_price` on promotion days) and can learn elasticity implicitly.
 
 I didn't model elasticity explicitly (e.g., as `log(price)` or `discount_pct`) because TFT can learn nonlinear relationships from raw features. Adding hand-crafted price features would be redundant. If I were running this for production, I'd test feature engineering ablations to see whether explicit elasticity features help.
 
@@ -102,13 +102,13 @@ PowerShell over Bash because the project was built on Windows. Cross-platform sh
 
 ### Why no CI/CD?
 
-Same reason — for solo work it's overhead without payoff. Each script is idempotent (CREATE OR REPLACE), so re-running is safe. Manual `python script.py` is fine when one person is editing.
+Same reason : for solo work it's overhead without payoff. Each script is idempotent (CREATE OR REPLACE), so re-running is safe. Manual `python script.py` is fine when one person is editing.
 
 For a team, Cloud Build triggers on git push would be the right approach: lint Python, validate SQL with `bq query --dry_run`, run integration tests against a staging project, then promote to production. The infrastructure is already CMEK-protected and least-privilege, so the CI/CD layer would only need to add deploy automation.
 
 ### Why BigQuery vs Spanner or Firestore?
 
-BigQuery is the right choice for analytical workloads. We're doing batch SQL aggregations across 118.6M rows; that's BigQuery's bread and butter. Spanner is for transactional workloads with strong consistency. Firestore is for document-oriented application data.
+BigQuery is the right choice for analytical workloads. We're doing batch SQL aggregations across a large row count; that's BigQuery's bread and butter. Spanner is for transactional workloads with strong consistency. Firestore is for document-oriented application data.
 
 If the use case shifted to real-time inventory updates (write-heavy, low-latency reads), I'd add Spanner or Firestore for the write path and stream changes to BigQuery for analytics. Lambda-architecture style.
 
@@ -131,7 +131,7 @@ Two reasons. First, regulated industries (finance, healthcare, government) often
 
 Second, key rotation discipline. CMEK with 90-day automatic rotation is the production standard. Google-managed keys also rotate, but the customer doesn't control the cadence or have visibility into rotation events. CMEK gives you control + audit trail.
 
-The cost is operational complexity — every Vertex AI service agent needs the `cryptoKeyEncrypterDecrypter` role on the relevant key, and missing this binding is a common deployment failure mode. Worth it for the audit story.
+The cost is operational complexity : every Vertex AI service agent needs the `cryptoKeyEncrypterDecrypter` role on the relevant key, and missing this binding is a common deployment failure mode. Worth it for the audit story.
 
 ### Why us-central1?
 
@@ -145,31 +145,31 @@ For multi-region production deployment, you'd run parallel pipelines in multiple
 
 ### Could you have done this cheaper?
 
-Yes. The big cost driver is Vertex AI training (~$15-25). Alternatives:
+Yes. The big cost driver is Vertex AI training (time and resource intensive). Alternatives:
 
 1. **Smaller TFT training set.** Reducing from 3,000 series to 1,000 would cut training time and cost by ~60%. Trade-off: less generalization, smaller per-category sample for evaluation.
-2. **TimesFM 2.5 zero-shot.** Skip training entirely; use the foundation model in inference mode. Cost: ~$2-5. But TimesFM is univariate, so it can't see covariates — you'd lose the headline story.
+2. **TimesFM 2.5 zero-shot.** Skip training entirely; use the foundation model in inference mode. Cost: a small fraction of that. But TimesFM is univariate, so it can't see covariates : you'd lose the headline story.
 3. **DeepAR via custom Vertex training.** Much cheaper than AutoML if you write the training script yourself. Setup time: weeks.
-4. **Skip Vertex entirely; deploy ARIMA only.** ARIMA at 32% MAPE is "production-acceptable" for many retailers. Total cost: ~$5.
+4. **Skip Vertex entirely; deploy ARIMA only.** ARIMA at 32% MAPE is "production-acceptable" for many retailers. Total cost: minimal.
 
-The $15-25 for TFT was the cost of getting an interpretable, defensible 44% MAPE reduction story. Worth it for portfolio-grade output. For production, I'd benchmark TimesFM as a cheaper alternative before committing to AutoML retraining cycles.
+The TFT training investment was justified by the 44% WAPE reduction story. For production, TimesFM or custom training would be evaluated as alternatives before committing to AutoML retraining cycles.
 
 ### What's the cost to keep this running?
 
-Roughly $2-5/month idle:
-- BigQuery storage: 33.7 GB at $0.02/GB = $0.70/month
-- GCS storage: 507 MB raw + various staging buckets, ~$0.50/month
-- KMS: $0.06/month per key × 4 keys = $0.24/month
-- Vertex AI dataset hosting: small fixed cost, ~$0.50/month
+Minimal ongoing cost while idle:
+- BigQuery storage: the curated dataset at standard BigQuery storage rates
+- GCS storage: minimal
+- KMS: minimal
+- Vertex AI dataset hosting: small fixed cost, minimal
 - No idle compute
 
-Active retraining adds ~$15-25 per cycle plus ~$3-5 per batch prediction.
+Active retraining adds compute cost per cycle for both training and batch inference.
 
-If I added a Composer (Airflow) environment for orchestration, that adds **~$300-400/month** as a baseline cost. That's why I haven't added Composer to this build — for a portfolio piece, a $300/month idle bill is hard to justify. For production, Composer pays for itself if you're running daily pipelines.
+If I added a Composer (Airflow) environment for orchestration, that adds **significant** as a baseline cost. That's why I haven't added Composer to this build : for a portfolio piece, a significant idle bill is hard to justify. For production, Composer pays for itself if you're running daily pipelines.
 
 ### What happens if AutoML training times out?
 
-Vertex stops when the budget cap hits. The pipeline finalizes with whatever it had at that point — usually a working model that just didn't get to fully optimize. This actually happened in my build: the documented "60-90 min" stretched to 4h 18m, hitting the 3-node-hour cap, and produced a working model.
+Vertex stops when the budget cap hits. The pipeline finalizes with whatever it had at that point : usually a working model that just didn't get to fully optimize. This actually happened in my build: the documented "60-90 min" stretched to 4h 18m, hitting the 3-node-hour cap, and produced a working model.
 
 The alternative would be `sync=False` and check status independently, but that has its own risks (the SDK can swallow errors silently).
 
@@ -179,7 +179,7 @@ Three approaches:
 
 1. **Hierarchical forecasting.** Train TFT on aggregated series (per-region, per-category), then disaggregate down to (store, SKU). 10× more SKUs becomes 10× more rows in the lower hierarchy, but the model count stays bounded.
 2. **Per-region training.** Split the 75 stores into 5-6 regions, train one TFT model per region. Each model trains in roughly the same time as the current one, but you have 5-6 of them in parallel. Total cost ~5× current; total time ~1× current.
-3. **More expensive Vertex training.** Increase `budget_milli_node_hours` to 10000 (10 node hours, ~$210). AutoML scales the search effort to use the budget. This works up to ~50K series; beyond that, AutoML hits architectural limits.
+3. **More expensive Vertex training.** Increase `budget_milli_node_hours` to 10000 (10 node hours, significantly less10). AutoML scales the search effort to use the budget. This works up to ~50K series; beyond that, AutoML hits architectural limits.
 
 For 100K+ series, custom-trained models on Vertex AI custom training (TPUs or A100 GPUs) become the right choice.
 
@@ -204,11 +204,11 @@ Six additions to the current architecture:
 5. **CI/CD via Cloud Build** with separate dev/staging/prod projects
 6. **VPC Service Controls** if the customer is regulated
 
-These are all additive — the current architecture supports them without redesign.
+These are all additive : the current architecture supports them without redesign.
 
 ### What was the worst trap you fell into during the build?
 
-The Vertex AI SDK error swallowing in `sync=False` mode. The first training submission appeared to succeed — the script printed the "submitted" banner, returned success, and exited. But the actual API call had failed silently. There was no training pipeline running, no orphan dataset, no error in any logs.
+The Vertex AI SDK error swallowing in `sync=False` mode. The first training submission appeared to succeed : the script printed the "submitted" banner, returned success, and exited. But the actual API call had failed silently. There was no training pipeline running, no orphan dataset, no error in any logs.
 
 I only discovered this when I went to check the training pipelines list and found nothing. The fix was switching to `sync=True` so the script blocks until the API actually accepts the job. The cost was ~30 minutes of debugging before figuring out what was happening.
 
@@ -216,7 +216,7 @@ Lesson: for any cloud SDK that supports both async and sync modes, default to sy
 
 ### What's the dirtiest hack in the codebase?
 
-The `forecast.predictions_<timestamp>` table name is auto-generated by Vertex AI batch prediction, with a millisecond-precision timestamp embedded. There's no way to override it. So the evaluation SQL hardcodes `forecast.predictions_2026_04_30T15_59_03_716Z_533` — a specific timestamped table name from one specific run.
+The `forecast.predictions_<timestamp>` table name is auto-generated by Vertex AI batch prediction, with a millisecond-precision timestamp embedded. There's no way to override it. So the evaluation SQL hardcodes `forecast.predictions_2026_04_30T15_59_03_716Z_533` : a specific timestamped table name from one specific run.
 
 If I wanted to make this reproducible across runs, I'd need to either:
 1. Use `INFORMATION_SCHEMA.TABLES` to find the latest predictions table by timestamp
@@ -249,8 +249,17 @@ Three things, in order of importance:
 
 Two directions, depending on priorities:
 
-1. **Hierarchical forecasting** on the same dataset. Train at three levels — overall, per-region, per-(store, SKU) — and reconcile via the OLS reconciliation method or MinT. This addresses the "different forecasts at different aggregation levels don't agree" problem that production retailers face every day.
+1. **Hierarchical forecasting** on the same dataset. Train at three levels : overall, per-region, per-(store, SKU) : and reconcile via the OLS reconciliation method or MinT. This addresses the "different forecasts at different aggregation levels don't agree" problem that production retailers face every day.
 
 2. **Productionize the comparison harness as a benchmark library.** Take the eval harness, generalize it to any pair of forecasting models, package as a Python library. Useful for any team comparing forecast approaches.
 
 I'd probably do hierarchical forecasting first because it's the more interesting engineering problem and a stronger portfolio piece.
+
+---
+
+## Author
+
+**Gregory B. Horne**
+Cloud Solutions Architect
+
+[GitHub: gbhorne](https://github.com/gbhorne) | [LinkedIn](https://linkedin.com/in/gbhorne)

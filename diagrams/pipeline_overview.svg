@@ -1,96 +1,119 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg width="680" height="740" viewBox="0 0 680 740" role="img" xmlns="http://www.w3.org/2000/svg">
-<title>Retail forecasting pipeline overview</title>
-<desc>End-to-end pipeline from synthetic data generator through BigQuery curated layer to two parallel ML branches converging at the evaluation harness.</desc>
-<defs>
-<style>
-text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", "Helvetica Neue", Arial, sans-serif; }
-.t { font-size: 14px; font-weight: 400; }
-.ts { font-size: 12px; font-weight: 400; }
-.th { font-size: 14px; font-weight: 500; }
-.c-gray rect { fill: #F1EFE8; stroke: #5F5E5A; }
-.c-gray .th, .c-gray .t { fill: #2C2C2A; }
-.c-gray .ts { fill: #5F5E5A; }
-.c-purple rect { fill: #EEEDFE; stroke: #534AB7; }
-.c-purple .th, .c-purple .t { fill: #26215C; }
-.c-purple .ts { fill: #534AB7; }
-.c-teal rect { fill: #E1F5EE; stroke: #0F6E56; }
-.c-teal .th, .c-teal .t { fill: #04342C; }
-.c-teal .ts { fill: #0F6E56; }
-.c-coral rect { fill: #FAECE7; stroke: #993C1D; }
-.c-coral .th, .c-coral .t { fill: #4A1B0C; }
-.c-coral .ts { fill: #993C1D; }
-.c-amber rect { fill: #FAEEDA; stroke: #854F0B; }
-.c-amber .th, .c-amber .t { fill: #412402; }
-.c-amber .ts { fill: #854F0B; }
-.c-green rect { fill: #EAF3DE; stroke: #3B6D11; }
-.c-green .th, .c-green .t { fill: #173404; }
-.c-green .ts { fill: #3B6D11; }
-.arr { stroke: #5F5E5A; stroke-width: 1.5; fill: none; }
-.label-neutral { fill: #5F5E5A; }
-</style>
-<marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-<path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-</marker>
-</defs>
-<g class="c-gray">
-<rect x="220" y="30" width="240" height="56" rx="8" stroke-width="0.5"/>
-<text class="th" x="340" y="50" text-anchor="middle" dominant-baseline="central">Synthetic data generator</text>
-<text class="ts" x="340" y="68" text-anchor="middle" dominant-baseline="central">Python, multiplicative model</text>
-</g>
-<line x1="340" y1="86" x2="340" y2="120" class="arr" marker-end="url(#arrow)"/>
-<g class="c-purple">
-<rect x="220" y="120" width="240" height="56" rx="8" stroke-width="0.5"/>
-<text class="th" x="340" y="140" text-anchor="middle" dominant-baseline="central">Cloud Storage (raw)</text>
-<text class="ts" x="340" y="158" text-anchor="middle" dominant-baseline="central">CMEK, Parquet</text>
-</g>
-<line x1="340" y1="176" x2="340" y2="210" class="arr" marker-end="url(#arrow)"/>
-<g class="c-purple">
-<rect x="160" y="210" width="360" height="68" rx="8" stroke-width="0.5"/>
-<text class="th" x="340" y="232" text-anchor="middle" dominant-baseline="central">BigQuery — curated layer</text>
-<text class="ts" x="340" y="250" text-anchor="middle" dominant-baseline="central">curated.fact_sales_daily</text>
-<text class="ts" x="340" y="266" text-anchor="middle" dominant-baseline="central">Partitioned, clustered</text>
-</g>
-<line x1="280" y1="278" x2="160" y2="330" class="arr" marker-end="url(#arrow)"/>
-<line x1="400" y1="278" x2="520" y2="330" class="arr" marker-end="url(#arrow)"/>
-<text class="ts label-neutral" x="190" y="305" text-anchor="middle">Top 200 SKUs</text>
-<text class="ts label-neutral" x="490" y="305" text-anchor="middle">Top 100 × Top 30</text>
-<g class="c-teal">
-<rect x="40" y="330" width="240" height="68" rx="8" stroke-width="0.5"/>
-<text class="th" x="160" y="352" text-anchor="middle" dominant-baseline="central">BQML ARIMA_PLUS</text>
-<text class="ts" x="160" y="370" text-anchor="middle" dominant-baseline="central">15,000 series, univariate</text>
-<text class="ts" x="160" y="386" text-anchor="middle" dominant-baseline="central">BigQuery-native training</text>
-</g>
-<g class="c-coral">
-<rect x="400" y="330" width="240" height="68" rx="8" stroke-width="0.5"/>
-<text class="th" x="520" y="352" text-anchor="middle" dominant-baseline="central">Vertex AI Forecast (TFT)</text>
-<text class="ts" x="520" y="370" text-anchor="middle" dominant-baseline="central">3,000 series, 14 covariates</text>
-<text class="ts" x="520" y="386" text-anchor="middle" dominant-baseline="central">AutoML architecture search</text>
-</g>
-<line x1="160" y1="398" x2="160" y2="440" class="arr" marker-end="url(#arrow)"/>
-<line x1="520" y1="398" x2="520" y2="440" class="arr" marker-end="url(#arrow)"/>
-<g class="c-teal">
-<rect x="40" y="440" width="240" height="56" rx="8" stroke-width="0.5"/>
-<text class="th" x="160" y="460" text-anchor="middle" dominant-baseline="central">forecast.arima_top200_h28</text>
-<text class="ts" x="160" y="478" text-anchor="middle" dominant-baseline="central">Predictions table</text>
-</g>
-<g class="c-coral">
-<rect x="400" y="440" width="240" height="56" rx="8" stroke-width="0.5"/>
-<text class="th" x="520" y="460" text-anchor="middle" dominant-baseline="central">forecast.predictions</text>
-<text class="ts" x="520" y="478" text-anchor="middle" dominant-baseline="central">Predictions table</text>
-</g>
-<line x1="160" y1="496" x2="280" y2="560" class="arr" marker-end="url(#arrow)"/>
-<line x1="520" y1="496" x2="400" y2="560" class="arr" marker-end="url(#arrow)"/>
-<g class="c-amber">
-<rect x="160" y="560" width="360" height="68" rx="8" stroke-width="0.5"/>
-<text class="th" x="340" y="582" text-anchor="middle" dominant-baseline="central">Evaluation harness (BigQuery SQL)</text>
-<text class="ts" x="340" y="600" text-anchor="middle" dominant-baseline="central">Same 2,820 series, same 28-day window</text>
-<text class="ts" x="340" y="616" text-anchor="middle" dominant-baseline="central">Weighted MAPE per category and overall</text>
-</g>
-<line x1="340" y1="628" x2="340" y2="662" class="arr" marker-end="url(#arrow)"/>
-<g class="c-green">
-<rect x="180" y="662" width="320" height="56" rx="8" stroke-width="0.5"/>
-<text class="th" x="340" y="682" text-anchor="middle" dominant-baseline="central">ARIMA 30.08% → TFT 16.92%</text>
-<text class="ts" x="340" y="700" text-anchor="middle" dominant-baseline="central">44% relative MAPE reduction</text>
-</g>
+<svg width="680" height="760" viewBox="0 0 680 760" xmlns="http://www.w3.org/2000/svg" style="background:#0a0f1e;font-family:sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="#4a6070" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <marker id="arrow-teal" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="#00c9b1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="#4a90d9" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <marker id="arrow-amber" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="#f0a500" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="#4caf50" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+
+  <!-- Synthetic Data Generator -->
+  <rect x="190" y="20" width="300" height="52" rx="8" fill="#0d1f33" stroke="#4a90d9" stroke-width="1"/>
+  <text x="340" y="41" text-anchor="middle" font-size="13" font-weight="600" fill="#7ab8f5">Synthetic Data Generator</text>
+  <text x="340" y="59" text-anchor="middle" font-size="11" fill="#5090c0">Python · multiplicative demand model · 7 years</text>
+
+  <line x1="340" y1="72" x2="340" y2="106" stroke="#4a6070" stroke-width="1" marker-end="url(#arrow)"/>
+
+  <!-- Cloud Storage -->
+  <rect x="190" y="106" width="300" height="52" rx="8" fill="#0d1f33" stroke="#4a90d9" stroke-width="1"/>
+  <text x="340" y="127" text-anchor="middle" font-size="13" font-weight="600" fill="#7ab8f5">Cloud Storage (raw)</text>
+  <text x="340" y="145" text-anchor="middle" font-size="11" fill="#5090c0">CMEK encrypted · Parquet</text>
+
+  <!-- CMEK badge -->
+  <rect x="514" y="112" width="120" height="34" rx="6" fill="#0e1f0e" stroke="#4caf50" stroke-width="0.8"/>
+  <text x="574" y="126" text-anchor="middle" font-size="11" font-weight="600" fill="#80c880">CMEK + KMS</text>
+  <text x="574" y="140" text-anchor="middle" font-size="10" fill="#50a050">90-day rotation</text>
+  <line x1="490" y1="129" x2="514" y2="129" stroke="#4caf50" stroke-width="0.8" stroke-dasharray="3 2" marker-end="url(#arrow-green)"/>
+
+  <line x1="340" y1="158" x2="340" y2="192" stroke="#4a6070" stroke-width="1" marker-end="url(#arrow)"/>
+
+  <!-- BigQuery curated -->
+  <rect x="150" y="192" width="380" height="64" rx="8" fill="#0c1a2e" stroke="#4a90d9" stroke-width="1"/>
+  <text x="340" y="213" text-anchor="middle" font-size="13" font-weight="600" fill="#7ab8f5">BigQuery: curated layer</text>
+  <text x="340" y="231" text-anchor="middle" font-size="11" fill="#5090c0">curated.fact_sales_daily</text>
+  <text x="340" y="247" text-anchor="middle" font-size="11" fill="#5090c0">Partitioned by date · Clustered by store + SKU</text>
+
+  <!-- Split labels -->
+  <text x="185" y="284" text-anchor="middle" font-size="11" fill="#4a6070">Top 200 SKUs</text>
+  <text x="495" y="284" text-anchor="middle" font-size="11" fill="#4a6070">Top 100 × Top 30</text>
+
+  <!-- Split lines -->
+  <line x1="270" y1="256" x2="160" y2="306" stroke="#4a6070" stroke-width="1" marker-end="url(#arrow)"/>
+  <line x1="410" y1="256" x2="520" y2="306" stroke="#4a6070" stroke-width="1" marker-end="url(#arrow)"/>
+
+  <!-- BQML ARIMA -->
+  <rect x="40" y="306" width="240" height="68" rx="8" fill="#0d2a22" stroke="#00c9b1" stroke-width="1"/>
+  <text x="160" y="327" text-anchor="middle" font-size="13" font-weight="600" fill="#00c9b1">BQML ARIMA_PLUS</text>
+  <text x="160" y="345" text-anchor="middle" font-size="11" fill="#7ecfc4">15,000 series · univariate</text>
+  <text x="160" y="361" text-anchor="middle" font-size="11" fill="#7ecfc4">holiday_region=US · auto_arima</text>
+
+  <!-- Vertex TFT -->
+  <rect x="400" y="306" width="240" height="68" rx="8" fill="#131a38" stroke="#6c63c9" stroke-width="1"/>
+  <text x="520" y="327" text-anchor="middle" font-size="13" font-weight="600" fill="#c0bbf8">Vertex AI Forecast (TFT)</text>
+  <text x="520" y="345" text-anchor="middle" font-size="11" fill="#8880cc">3,000 series · 14 covariates</text>
+  <text x="520" y="361" text-anchor="middle" font-size="11" fill="#8880cc">AutoML architecture search</text>
+
+  <!-- TFT model badge -->
+  <rect x="514" y="250" width="134" height="34" rx="6" fill="#1e1608" stroke="#f0a500" stroke-width="0.8"/>
+  <text x="581" y="264" text-anchor="middle" font-size="11" font-weight="600" fill="#f0a500">quantile loss</text>
+  <text x="581" y="278" text-anchor="middle" font-size="10" fill="#c48a00">P10 · P50 · P90</text>
+  <line x1="520" y1="267" x2="514" y2="267" stroke="#f0a500" stroke-width="0.8" stroke-dasharray="3 2" marker-end="url(#arrow-amber)"/>
+
+  <line x1="160" y1="374" x2="160" y2="414" stroke="#00c9b1" stroke-width="1" marker-end="url(#arrow-teal)"/>
+  <line x1="520" y1="374" x2="520" y2="414" stroke="#6c63c9" stroke-width="1" marker-end="url(#arrow-blue)"/>
+
+  <!-- ARIMA predictions -->
+  <rect x="40" y="414" width="240" height="52" rx="8" fill="#0d2a22" stroke="#00c9b1" stroke-width="1"/>
+  <text x="160" y="435" text-anchor="middle" font-size="12" font-weight="600" fill="#00c9b1">forecast.arima_top200_h28</text>
+  <text x="160" y="453" text-anchor="middle" font-size="11" fill="#7ecfc4">28-day predictions table</text>
+
+  <!-- TFT predictions -->
+  <rect x="400" y="414" width="240" height="52" rx="8" fill="#131a38" stroke="#6c63c9" stroke-width="1"/>
+  <text x="520" y="435" text-anchor="middle" font-size="12" font-weight="600" fill="#c0bbf8">forecast.predictions</text>
+  <text x="520" y="453" text-anchor="middle" font-size="11" fill="#8880cc">28-day predictions table</text>
+
+  <!-- Side covariates badge -->
+  <rect x="514" y="378" width="134" height="28" rx="6" fill="#0d2a22" stroke="#00c9b1" stroke-width="0.8"/>
+  <text x="581" y="389" text-anchor="middle" font-size="10" font-weight="600" fill="#00c9b1">promo · weather</text>
+  <text x="581" y="401" text-anchor="middle" font-size="9" fill="#7ecfc4">is_holiday · price</text>
+
+  <line x1="160" y1="466" x2="278" y2="530" stroke="#4a6070" stroke-width="1" marker-end="url(#arrow)"/>
+  <line x1="520" y1="466" x2="402" y2="530" stroke="#4a6070" stroke-width="1" marker-end="url(#arrow)"/>
+
+  <!-- Evaluation harness -->
+  <rect x="150" y="530" width="380" height="68" rx="8" fill="#1e1608" stroke="#f0a500" stroke-width="1"/>
+  <text x="340" y="551" text-anchor="middle" font-size="13" font-weight="600" fill="#f0a500">Evaluation Harness (BigQuery SQL)</text>
+  <text x="340" y="569" text-anchor="middle" font-size="11" fill="#c48a00">Same 2,820 series · same 28-day window</text>
+  <text x="340" y="585" text-anchor="middle" font-size="11" fill="#c48a00">Weighted MAPE per category and overall</text>
+
+  <line x1="340" y1="598" x2="340" y2="638" stroke="#4a6070" stroke-width="1" marker-end="url(#arrow)"/>
+
+  <!-- Result -->
+  <rect x="170" y="638" width="340" height="56" rx="8" fill="#0e1f0e" stroke="#4caf50" stroke-width="1.5"/>
+  <text x="340" y="660" text-anchor="middle" font-size="13" font-weight="600" fill="#80c880">ARIMA 30.08% vs TFT 16.92%</text>
+  <text x="340" y="678" text-anchor="middle" font-size="12" fill="#50a050">44% relative WAPE reduction</text>
+  <text x="340" y="692" text-anchor="middle" font-size="10" fill="#408040">Holiday delta: 51 pp · Promo delta: 24 pp</text>
+
+  <!-- Legend -->
+  <rect x="16" y="720" width="12" height="12" rx="2" fill="#0d1f33" stroke="#4a90d9" stroke-width="0.8"/>
+  <text x="34" y="731" font-size="10" fill="#8899aa">Data / Storage</text>
+  <rect x="130" y="720" width="12" height="12" rx="2" fill="#0d2a22" stroke="#00c9b1" stroke-width="0.8"/>
+  <text x="148" y="731" font-size="10" fill="#8899aa">BQML pipeline</text>
+  <rect x="248" y="720" width="12" height="12" rx="2" fill="#131a38" stroke="#6c63c9" stroke-width="0.8"/>
+  <text x="266" y="731" font-size="10" fill="#8899aa">Vertex AI pipeline</text>
+  <rect x="376" y="720" width="12" height="12" rx="2" fill="#1e1608" stroke="#f0a500" stroke-width="0.8"/>
+  <text x="394" y="731" font-size="10" fill="#8899aa">Evaluation</text>
+  <rect x="464" y="720" width="12" height="12" rx="2" fill="#0e1f0e" stroke="#4caf50" stroke-width="0.8"/>
+  <text x="482" y="731" font-size="10" fill="#8899aa">Result</text>
+
 </svg>

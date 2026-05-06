@@ -2,7 +2,9 @@
 
 > Built April 2026. All data is synthetically generated. No real retailer information was used.
 
-**Production-shaped retail demand forecasting benchmark on Google Cloud, comparing BQML ARIMA_PLUS against Vertex AI Forecast (Temporal Fusion Transformer) on 7 years of synthetic retail data.**
+**Production-shaped retail demand forecasting benchmark on Google Cloud, comparing univariate BQML ARIMA_PLUS against Vertex AI AutoML Forecasting (TFT-capable stack) on 7 years of synthetic retail data.**
+
+> **Benchmark framing:** This is not a comparison against the strongest possible BigQuery ML model. It compares univariate BQML ARIMA_PLUS against a multivariate Vertex AI Forecast model. A stronger BQML baseline would use ARIMA_PLUS_XREG, which supports external regressors. A v2 should include that as a covariate-aware BQML challenger.
 
 ---
 
@@ -13,9 +15,9 @@ On a 28-day holdout across the same 2,820 retail series, weighted MAPE (also kno
 | Model | Architecture | Series | Train time | WAPE |
 |-------|--------------|--------|-----------|------|
 | BQML ARIMA_PLUS | Univariate, holiday-detected | 15,000 | 3 min | 32.6% |
-| Vertex AI Forecast (TFT) | Multivariate, 14 covariates | 3,000 | 4h 18m | **16.9%** |
+| Vertex AI Forecast (TFT) | Multivariate, 14 covariates, AutoML search | 3,000 | 4h 18m | **16.9%** |
 
-**44% relative WAPE reduction.** Same 2,820 series eval: ARIMA 30.08% vs TFT 16.92%, a 13.16 percentage-point absolute drop. The largest measured gaps occurred on holiday and promotion days, which strongly suggests the explicit covariates ARIMA cannot consume, `promo_flag`, `weather_temp_f`, `is_holiday`, drove much of the improvement.
+**44% relative WAPE reduction.** Same 2,820 series eval: ARIMA 30.08% vs TFT 16.92%, a 13.16 percentage-point absolute drop. The day-type breakdown strongly suggests the advantage is concentrated where explicit covariates matter, particularly promotions and holidays. A formal feature ablation would be needed to prove causality at the covariate level.
 
 The most striking finding is on holidays: ARIMA hit **77.27% WAPE** on holiday days vs TFT's **25.75%**, a 51-point swing. On promotion days: ARIMA 40.06% vs TFT 16.37%, a 24-point swing. These are direct, measured day-type effects.
 
@@ -31,7 +33,7 @@ This is a complete forecasting pipeline, not a notebook demo:
 - **Curated BigQuery layer** with partitioning, clustering, and denormalized dimensions
 - **Two parallel ML pipelines**: a BQML statistical baseline and a Vertex AI deep-learning challenger
 - **Apples-to-apples evaluation harness** comparing both on identical holdout windows
-- **Production security baseline**: customer-managed encryption keys (CMEK), 5 service accounts on least-privilege, 90-day key rotation
+- **Production security design**: customer-managed encryption keys (CMEK), 5 service accounts on least-privilege, 90-day key rotation
 
 Total scale:
 
@@ -78,9 +80,11 @@ bqml-vs-vertex-forecast/
 │   ├── 08_tft_prediction_request.sql     # context + horizon
 │   └── 09_compare_arima_vs_tft_mape.sql  # head-to-head comparison
 └── vertex/
-    ├── train_tft.py             # Vertex AI Forecast training submission
-    └── batch_predict_tft.py     # Batch inference submission
+    ├── train_tft.py             # Vertex AI Forecast training submission (reference)
+    └── batch_predict_tft.py     # Batch inference submission (reference)
 ```
+
+> **Note on the vertex scripts:** `train_tft.py` and `batch_predict_tft.py` are reference implementations showing the job submission pattern. Column specs and dataset paths are intentionally left as placeholders; they are not plug-and-play reproductions of the documented run.
 
 For the full architectural rationale, design decisions, security model, and operational characteristics, see [`ARCHITECTURE_bqml.md`](ARCHITECTURE_bqml.md). For deeper Q&A on design choices, methodology, and what the numbers mean, see [`QA.md`](QA.md).
 
@@ -101,7 +105,7 @@ Top-100-SKUs-by-revenue is dominated by high-price categories. Beverages, Snacks
 
 ## Why TFT Wins: Covariate Effects
 
-The 13-percentage-point gap is not a generic deep-learning improvement. It's a measurable, attributable effect of three specific covariates ARIMA structurally cannot see.
+The 13-percentage-point gap is concentrated where explicit covariates matter most. The univariate ARIMA_PLUS baseline structurally cannot consume `promo_flag`, `weather_temp_f`, or `is_holiday`; the day-type breakdown below shows where that limitation shows up most clearly. A formal ablation would be needed to quantify each covariate's individual contribution.
 
 ### Holiday Accuracy
 
@@ -119,7 +123,7 @@ ARIMA's holiday accuracy is catastrophic. BQML's automatic holiday detection wor
 | Promo | 9,413 | **40.06%** | 16.37% | **23.69** |
 | Non-Promo | 69,417 | 27.71% | 17.05% | 10.66 |
 
-Promotion days produce 1.5-2.5x volume spikes. ARIMA cannot see `promo_flag` and so predicts baseline demand. TFT consumed the future promo schedule and predicted the spike. This is the cleanest covariate-attribution finding in the project.
+Promotion days produce 1.5-2.5x volume spikes. The univariate ARIMA baseline has no visibility into `promo_flag` and predicts baseline demand on those days. TFT consumed the future promo schedule as an explicit feature. The gap on promo days is the clearest day-type signal in the evaluation.
 
 ### Weekend vs Weekday (Control)
 
@@ -173,7 +177,9 @@ This benchmark is a fair comparison of two forecasting approaches on the same da
 
 **Day-type attribution is correlation, not causation.** The 51-point holiday gap and 24-point promo gap are observed effects on day-type subsets, not the result of formal ablation studies.
 
-**ARIMA_PLUS does have holiday support.** BQML's ARIMA_PLUS includes built-in holiday detection via `holiday_region='US'`. The limitation is that it cannot consume explicit exogenous covariates like `promo_flag` and `weather_temp_f` the way TFT can.
+**This is a univariate ARIMA baseline.** The BQML model used here is ARIMA_PLUS, which does not support external regressors. BigQuery ML also offers ARIMA_PLUS_XREG for multivariate time-series forecasting with covariates. The v2 improvement list includes this as a stronger BQML challenger.
+
+**Vertex AI Forecast uses AutoML model selection.** The TFT result reflects Vertex AI AutoML Forecasting, which supports the TFT architecture and exposes TFT-specific outputs including feature attributions. The training job submitted does not guarantee TFT exclusively; AutoML selects the best-performing architecture from its supported set.
 
 **Top-N global selection.** Top-100 SKUs by global revenue is dominated by high-price categories. Lower-price, high-volume categories like Beverages drop out of the comparison.
 
@@ -197,6 +203,7 @@ Four of five are SKU00360 across different stores: same SKU, different locations
 
 ## v2 Improvements
 
+- **ARIMA_PLUS_XREG baseline**: add the covariate-aware BQML model as a stronger v2 challenger before concluding TFT is required for promo and holiday accuracy
 - **TFT ablation tests**: leave-one-feature-out training runs to attribute the WAPE gap to specific covariates with statistical confidence rather than correlation
 - **Top-N-per-category sampling**: ensure balanced coverage across all 7 categories instead of revenue-weighted skew
 - **WAPE + sMAPE + RMSE + RMSSE side-by-side**: single-metric benchmarks hide model behavior
